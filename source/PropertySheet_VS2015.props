@@ -1,0 +1,52 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ImportGroup Label="PropertySheets" />
+  <PropertyGroup Label="UserMacros">
+    <ThirdPartyDir>$(SolutionDir)..\thirdparty\</ThirdPartyDir>
+    <AsioDir>$(ThirdPartyDir)source\asio-1.11.0\</AsioDir>
+    <SpdLogDir>$(ThirdPartyDir)source\spdlog\</SpdLogDir>
+    <SdlDir>$(ThirdPartyDir)binaries\windows\SDL2-2.0.4\</SdlDir>
+    <ApiIncludeDir>$(SolutionDir)include\</ApiIncludeDir>
+    <FFmpegDir>$(ThirdPartyDir)binaries\windows\ffmpeg-3.0.0-VS2013-x86\</FFmpegDir>
+  </PropertyGroup>
+  <PropertyGroup>
+    <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);$(ApiIncludeDir);$(AsioDir)include;$(SdlDir)include;$(SpdLogDir)include;$(FFmpegDir)include</IncludePath>
+    <OutDir>$(SolutionDir)bin\$(PlatformTarget)\$(Configuration)\</OutDir>
+  </PropertyGroup>
+  <ItemDefinitionGroup>
+    <ClCompile>
+      <AdditionalIncludeDirectories>
+      </AdditionalIncludeDirectories>
+    </ClCompile>
+    <Link>
+      <AdditionalLibraryDirectories>$(SdlDir)lib\$(PlatformTarget)\;$(FFmpegDir)lib\$(PlatformTarget)\</AdditionalLibraryDirectories>
+      <AdditionalDependencies>SDL2.lib;avcodec.lib;avformat.lib;avutil.lib;swscale.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <ImportLibrary>$(SolutionDir)lib\$(PlatformTarget)\$(Configuration)\$(TargetName).lib</ImportLibrary>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <BuildMacro Include="ThirdPartyDir">
+      <Value>$(ThirdPartyDir)</Value>
+      <EnvironmentVariable>true</EnvironmentVariable>
+    </BuildMacro>
+    <BuildMacro Include="AsioDir">
+      <Value>$(AsioDir)</Value>
+      <EnvironmentVariable>true</EnvironmentVariable>
+    </BuildMacro>
+    <BuildMacro Include="SpdLogDir">
+      <Value>$(SpdLogDir)</Value>
+    </BuildMacro>
+    <BuildMacro Include="SdlDir">
+      <Value>$(SdlDir)</Value>
+      <EnvironmentVariable>true</EnvironmentVariable>
+    </BuildMacro>
+    <BuildMacro Include="ApiIncludeDir">
+      <Value>$(ApiIncludeDir)</Value>
+      <EnvironmentVariable>true</EnvironmentVariable>
+    </BuildMacro>
+    <BuildMacro Include="FFmpegDir">
+      <Value>$(FFmpegDir)</Value>
+      <EnvironmentVariable>true</EnvironmentVariable>
+    </BuildMacro>
+  </ItemGroup>
+</Project>
