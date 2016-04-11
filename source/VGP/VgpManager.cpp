@@ -18,8 +18,6 @@ VgpManager& VgpManager::GetInstance()
 VgpManager::VgpManager()
     : m_isThreadRunning(true)
     , m_refreshRate(kDefaultRefreshRate)
-    , m_readerThreads(4)
-    , m_decoderThreads(4)
     , m_renderThread(std::thread(&VgpManager::ThreadMain, this))
 {
 
@@ -31,6 +29,7 @@ void VgpManager::NewWindow(const unsigned int windowID,
                           const size_t windowHeight,
                           const std::string windowTitle)
 {
+    VGPLOG_INFO() << "NewWindow, windowID=" << windowID;
     VgpControlPtr ctl = std::make_shared<VgpControl>();
     ctl->f = std::bind(&VgpManager::NewWindowInternal, this, 
                       windowID, windowWidth, windowHeight, windowTitle);
@@ -42,6 +41,7 @@ void VgpManager::NewWindow(const unsigned int windowID,
 void VgpManager::NewWindowFrom(const unsigned int windowID,
                               void *windowHandle)
 {
+    VGPLOG_INFO() << "NewWindowForm, windowID=" << windowID;
     VgpControlPtr p = std::make_shared<VgpControl>();
     p->f = std::bind(&VgpManager::NewWindowFromInternal, this,
                        windowID, windowHandle);
@@ -56,6 +56,17 @@ void VgpManager::DeleteWindow(const unsigned int windowID)
     VgpControlPtr p = std::make_shared<VgpControl>();
     p->f = std::bind(&VgpManager::DeleteWindowInternal, this,
                        windowID);
+    std::unique_lock<std::mutex> lk(p->m);
+    PushMessage(std::ref(p));
+    p->cv.wait(lk);
+}
+
+void VgpManager::NewVideo(const unsigned int windowID, const unsigned int videoID,
+                          const NewVideoParam& param)
+{
+    VgpControlPtr p = std::make_shared<VgpControl>();
+    p->f = std::bind(&VgpManager::NewVideoInternal, this,
+                     windowID, videoID, param);
     std::unique_lock<std::mutex> lk(p->m);
     PushMessage(std::ref(p));
     p->cv.wait(lk);
@@ -85,42 +96,39 @@ void VgpManager::NewWindowInternal(const unsigned int windowID,
                            const std::string windowTitle)
 {
     WindowContextPtr window = std::make_shared<WindowContext>(windowID, windowWidth, windowHeight, windowTitle);
-    m_windows.push_back(window);
+    m_windows[windowID] = window;
 }
 
 void VgpManager::NewWindowFromInternal(const unsigned int windowID,
                                        void *windowHandle)
 {
     WindowContextPtr window = std::make_shared<WindowContext>(windowID, windowHandle);
-    m_windows.push_back(window);
+    m_windows[windowID] = window;;
 }
 
 
 void VgpManager::DeleteWindowInternal(const unsigned int windowID)
 {
-    m_windows.remove_if([windowID](WindowContextPtr p) { return p->GetWindowID() == windowID; });
+    m_windows.erase(windowID);
+}
+
+void VgpManager::NewVideoInternal(const unsigned int windowID, const unsigned int videoID,
+                      const NewVideoParam& param)
+{
+    //m_windows[windowID]->
 }
 
 void VgpManager::Initialize()
 {
-    //auto console = spdlog::stdout_logger_mt("console");
-
-    std::vector<spdlog::sink_ptr> sinks;
-    sinks.push_back(std::make_shared<spdlog::sinks::stdout_sink_mt>());
-    sinks.push_back(std::make_shared<spdlog::sinks::rotating_file_sink_mt>("vgp", "log", 1048576 * 5, 3));
-    m_logger = std::make_shared<spdlog::logger>("vgp", begin(sinks), end(sinks));
-    spdlog::register_logger(m_logger);
-
-    spdlog::set_level(spdlog::level::trace);
-    spdlog::set_pattern("*** [%H:%M:%S %z] [thread %t] %v ***");
-
-    m_logger->info("============================ VgpManager() START");
+   
+    VGPLOG_INFO() << "===== VgpManager() START =====";
+    VGPLOG_DDEBUG("Start Logger {},{},{}", 1, 2, 3);
 
     if (SDL_Init(SDL_INIT_VIDEO) != 0) {
-        m_logger->critical("SDL_Init() failed : ") << SDL_GetError();
+        VGPLOG_FATAL() << "SDL_Init() failed : " << SDL_GetError();
     }
     if (!SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "1")) {
-        m_logger->critical("Unable to Init hinting: ") << SDL_GetError();
+        VGPLOG_FATAL() << "Unable to Init hinting: " << SDL_GetError();
     }
 
     // Initialize image loading for PNGs
@@ -140,29 +148,26 @@ void VgpManager::Initialize()
 
 void VgpManager::PrintDeviceInformation()
 {
-    if (m_logger->level() <= spdlog::level::debug) {
-        m_logger->debug()
-            << "platform :: " << SDL_GetPlatform() << "\r\n"
-            << "L1 cache size :: " << SDL_GetCPUCacheLineSize() << "kbytes" << "\r\n"
-            << "cpu num :: " << SDL_GetCPUCount() << "\r\n"
-            << "memory size :: " << SDL_GetSystemRAM() << "MB" << "\r\n"
-            << "3D Now :: " << SDL_Has3DNow() << "\r\n"
-            << "AVX :: " << SDL_HasAVX() << "\r\n"
-            << "AltiVec :: " << SDL_HasAltiVec() << "\r\n"
-            << "MMX :: " << SDL_HasMMX() << "\r\n"
-            << "RDTSC :: " << SDL_HasRDTSC() << "\r\n"
-            << "SSE :: " << SDL_HasSSE() << "\r\n"
-            << "SSE2 :: " << SDL_HasSSE2() << "\r\n"
-            << "SSE3 :: " << SDL_HasSSE3() << "\r\n"
-            << "SSE41 :: " << SDL_HasSSE41() << "\r\n"
-            << "SSE42 :: " << SDL_HasSSE42() << "\r\n";
-    }
+    VGPLOG_DEBUG() << "platform :: " << SDL_GetPlatform();
+    VGPLOG_DEBUG() << "L1 cache size :: " << SDL_GetCPUCacheLineSize() << "kbytes";
+    VGPLOG_DEBUG() << "cpu num :: " << SDL_GetCPUCount();
+    VGPLOG_DEBUG() << "memory size :: " << SDL_GetSystemRAM() << "MB";
+    VGPLOG_DEBUG() << "3D Now :: " << SDL_Has3DNow();
+    VGPLOG_DEBUG() << "AVX :: " << SDL_HasAVX();
+    VGPLOG_DEBUG() << "AltiVec :: " << SDL_HasAltiVec();
+    VGPLOG_DEBUG() << "MMX :: " << SDL_HasMMX();
+    VGPLOG_DEBUG() << "RDTSC :: " << SDL_HasRDTSC();
+    VGPLOG_DEBUG() << "SSE :: " << SDL_HasSSE();
+    VGPLOG_DEBUG() << "SSE2 :: " << SDL_HasSSE2();
+    VGPLOG_DEBUG() << "SSE3 :: " << SDL_HasSSE3();
+    VGPLOG_DEBUG() << "SSE41 :: " << SDL_HasSSE41();
+    VGPLOG_DEBUG() << "SSE42 :: " << SDL_HasSSE42();
 }
 
 
 VgpManager::~VgpManager()
 {
-    m_logger->info("-------------------------------- VgpManager() END");
+    VGPLOG_INFO() << "===== VgpManager() END =====";
     m_isThreadRunning = false;
     m_renderThread.join();
 
@@ -225,13 +230,13 @@ void VgpManager::HandleEvent(SDL_Event &e)
 void VgpManager::Update()
 {
     for (auto w : m_windows)
-        w->Update();
+        w.second->Update();
 }
 
 void VgpManager::Render()
 {
     for (auto w : m_windows)
-        w->Render();
+        w.second->Update();
 }
 
 }

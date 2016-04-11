@@ -12,8 +12,10 @@
 
 #include <SDL.h>
 #include <spdlog/spdlog.h>
+#include <vgp/vgp.hpp>
+
 #include "WindowContext.hpp"
-#include "ThreadPool.hpp"
+
 
 
 namespace vgp
@@ -32,10 +34,6 @@ class VgpManager : public IRenderer
 {
 public:
     static VgpManager& GetInstance();
-    std::shared_ptr<spdlog::logger> GetLogger()
-    {
-        return m_logger;
-    }
 
     unsigned int NewWindowID()
     {
@@ -53,6 +51,9 @@ public:
         void *windowHandle);
 
     void DeleteWindow(const unsigned int windowID);
+
+    void NewVideo(const unsigned int windowID, const unsigned int videoID,
+                  const NewVideoParam& param);
 
 private:
     void PushMessage(VgpControlPtr& ptr);
@@ -75,14 +76,15 @@ private:
 
     void DeleteWindowInternal(const unsigned int windowID);
     
-
+    void NewVideoInternal(const unsigned int windowID, const unsigned int videoID,
+                  const NewVideoParam& param);
 private:
     void Initialize();
     void PrintDeviceInformation();
-    std::shared_ptr<spdlog::logger> m_logger;
     
 
-    std::list<WindowContextPtr> m_windows;
+    //std::list<WindowContextPtr> m_windows;
+    std::map<unsigned int, WindowContextPtr> m_windows;
     std::atomic<unsigned int> m_lastWindowID;
 
     std::vector<VgpControlPtr> m_controlQueue;
@@ -92,9 +94,6 @@ private:
     enum {kDefaultRefreshRate = 30};
 
 private:
-    ThreadPool m_readerThreads;
-    ThreadPool m_decoderThreads;
-
     std::thread m_renderThread;
     void ThreadMain();
     std::atomic<bool> m_isThreadRunning;

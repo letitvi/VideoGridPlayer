@@ -179,6 +179,7 @@ xcopy /y /d $(FFmpegDir)bin\*.dll $(TargetDir)</Command>
     <ClInclude Include="FFmpegHelper.hpp" />
     <ClInclude Include="FFmpegSubtitleDecoder.hpp" />
     <ClInclude Include="IRenderer.hpp" />
+    <ClInclude Include="Logger.hpp" />
     <ClInclude Include="MediaDataType.hpp" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="ThreadPool.hpp" />
@@ -193,6 +194,7 @@ xcopy /y /d $(FFmpegDir)bin\*.dll $(TargetDir)</Command>
     <ClCompile Include="FFmpegFileReader.cpp" />
     <ClCompile Include="FFmpegHelper.cpp" />
     <ClCompile Include="FFmpegSubtitleDecoder.cpp" />
+    <ClCompile Include="Logger.cpp" />
     <ClCompile Include="stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>

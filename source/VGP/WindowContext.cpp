@@ -11,6 +11,8 @@ namespace vgp
 WindowContext::WindowContext(const unsigned int windowID,
               void *windowHandle)
     : m_windowID(windowID)
+    , m_readerThreads(4)
+    , m_decoderThreads(4)
 {
     m_sdlWindow = SDL_CreateWindowFrom(windowHandle);
     m_sdlRenderer = SDL_CreateRenderer(m_sdlWindow, -1, SDL_RENDERER_ACCELERATED);
@@ -21,6 +23,8 @@ WindowContext::WindowContext(const unsigned int windowID,
                              const size_t windowHeight,
                              const std::string windowTitle)
     : m_windowID(windowID)
+    , m_readerThreads(4)
+    , m_decoderThreads(4)
 {
     m_sdlWindow = SDL_CreateWindow(
         windowTitle.c_str(),

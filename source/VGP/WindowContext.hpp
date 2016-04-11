@@ -4,6 +4,7 @@
 #include <memory>
 #include <string>
 
+#include "ThreadPool.hpp"
 #include "IRenderer.hpp"
 
 namespace vgp
@@ -30,6 +31,9 @@ private:
     SDL_Window *m_sdlWindow;
     SDL_Renderer *m_sdlRenderer;
     unsigned int m_windowID;
+
+    ThreadPool m_readerThreads;
+    ThreadPool m_decoderThreads;
 };
 
 typedef std::shared_ptr<WindowContext> WindowContextPtr;

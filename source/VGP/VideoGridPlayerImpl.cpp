@@ -24,10 +24,12 @@ VideoGridPlayerImpl::VideoGridPlayerImpl(void *windowHandle)
 
 VideoGridPlayerImpl::~VideoGridPlayerImpl()
 {
+    m_manager.DeleteWindow(m_windowID);
 }
 
 void VideoGridPlayerImpl::NewVideo(const unsigned int videoID, const NewVideoParam &param)
 {
+    m_manager.NewVideo(m_windowID, videoID, param);
 }
 
 void VideoGridPlayerImpl::ControlVideo(const unsigned int videoID, const ControlVideoParam &param)
